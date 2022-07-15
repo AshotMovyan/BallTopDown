@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "..//Actors/Wall.h"
 #include "MyPlayer.generated.h"
 
 class UCameraComponent;
@@ -41,7 +42,7 @@ protected:
 		USphereComponent* SphereColl;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
-		float RotateSpeed;
+		float RotateSpeed; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 	float MaxLaunchIntensity;
@@ -49,15 +50,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 		float MaxTimeLaunchVelocty;		//	The time it takes for the ball to get maximum tension to launch			
 
-	FRotator CurrentRotation;
-	FTimerHandle TimerHandle;
-	float CurrentLaunchIntensity;
-
-
 	void TurnAtRate(float value);
 
 	void LaunchPressed();
 	void LaunchReleased();
+
+	UFUNCTION()
+		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 
 
@@ -68,4 +67,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+private:
+	FRotator CurrentRotation;
+	FTimerHandle TimerHandle;
+	float CurrentLaunchIntensity;
+	FVector CurrentForward;
 };

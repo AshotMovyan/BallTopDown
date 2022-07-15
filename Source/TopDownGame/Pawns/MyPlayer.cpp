@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "..//Pawns/MyPlayer.h"
@@ -10,6 +10,11 @@
 #include "GameFramework/Controller.h"
 #include "Components/ArrowComponent.h"
 #include "Math/UnrealMathUtility.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "..//Actors/Wall.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+
+#define print(String) GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT(String))
 
 
 // Sets default values
@@ -61,7 +66,7 @@ AMyPlayer::AMyPlayer()
 	// Variables initialization
 	RotateSpeed = 400.0f;
 	MaxLaunchIntensity = 200000.0f;
-	MaxTimeLaunchVelocty = 1.0f;
+	MaxTimeLaunchVelocty = 0.6f;
 }
 
 // Called when the game starts or when spawned
@@ -69,6 +74,11 @@ void AMyPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (SphereColl)
+	{
+		SphereColl->OnComponentHit.AddDynamic(this, &AMyPlayer::OnHit);
+	}
+
 }
 
 
@@ -118,6 +128,18 @@ void AMyPlayer::LaunchReleased()
 
 	GetWorldTimerManager().ClearTimer(TimerHandle);
 
-	FVector Forward = Arrow->GetForwardVector();
-	SphereColl->AddImpulse(Forward * CurrentLaunchIntensity);
+	CurrentForward = Arrow->GetForwardVector();
+	SphereColl->AddImpulse(CurrentForward * CurrentLaunchIntensity);
+}
+
+void AMyPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	AWall* Wall = Cast<AWall>(OtherActor);
+	if (Wall)
+	{
+		FRotator MirrorVectorByNormalRotation = UKismetMathLibrary::FindLookAtRotation(Hit.TraceEnd, CurrentForward -	//	Get mirror vector and make rotation from it used mirror formule.
+			((UKismetMathLibrary::Dot_VectorVector(Hit.ImpactNormal, CurrentForward)) * 2 * Hit.ImpactNormal));			//	( r = d − 2n*(d⋅n) ) Where r-mirror vector, n-hit normal, d-current vector. 
+		Arrow->SetRelativeRotation(FRotator(Arrow->GetRelativeRotation().Pitch, MirrorVectorByNormalRotation.Yaw, Arrow->GetRelativeRotation().Roll));
+		CurrentForward = Arrow->GetForwardVector();
+	}
 }
