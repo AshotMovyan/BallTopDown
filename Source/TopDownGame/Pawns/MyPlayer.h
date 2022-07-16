@@ -12,6 +12,8 @@ class UStaticMeshComponent;
 class USpringArmComponent;
 class USphereComponent;
 class UArrowComponent;
+class UPlayerStart;
+class ATopDownGameGameModeBase;
 
 UCLASS()
 class TOPDOWNGAME_API AMyPlayer : public APawn
@@ -67,9 +69,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void FellOutOfWorld(const UDamageType& DmgType) override;
+
 private:
 	FRotator CurrentRotation;
 	FTimerHandle TimerHandle;
 	float CurrentLaunchIntensity;
 	FVector CurrentForward;
+	ATopDownGameGameModeBase* MyMode;
 };

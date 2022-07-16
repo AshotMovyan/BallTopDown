@@ -11,7 +11,9 @@
 #include "Components/ArrowComponent.h"
 #include "Math/UnrealMathUtility.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "..//TopDownGameGameModeBase.h"
 #include "..//Actors/Wall.h"
+#include "Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 
 #define print(String) GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT(String))
@@ -79,6 +81,8 @@ void AMyPlayer::BeginPlay()
 		SphereColl->OnComponentHit.AddDynamic(this, &AMyPlayer::OnHit);
 	}
 
+	MyMode = Cast<ATopDownGameGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+
 }
 
 
@@ -105,6 +109,16 @@ void AMyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Launch", IE_Pressed, this, &AMyPlayer::LaunchPressed);
 	PlayerInputComponent->BindAction("Launch", IE_Released, this, &AMyPlayer::LaunchReleased);
 
+}
+
+void AMyPlayer::FellOutOfWorld(const UDamageType& DmgType)
+{
+	if (MyMode)
+	{
+		Destroy();
+		MyMode->RestartPlayer(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	}
+	print("-------");
 }
 
 
