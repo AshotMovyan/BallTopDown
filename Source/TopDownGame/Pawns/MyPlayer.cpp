@@ -9,11 +9,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "Components/ArrowComponent.h"
-#include "Math/UnrealMathUtility.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "..//TopDownGameGameModeBase.h"
 #include "..//Actors/Wall.h"
-#include "Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 
 #define print(String) GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, TEXT(String))
@@ -104,10 +102,15 @@ void AMyPlayer::Tick(float DeltaTime)
 void AMyPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	
+	if (able_to_input())
+	{
+		print("aaaaaaaaaa");
+		PlayerInputComponent->BindAxis("TurnAtRate", this, &AMyPlayer::TurnAtRate);
+		PlayerInputComponent->BindAction("Launch", IE_Pressed, this, &AMyPlayer::LaunchPressed);
+		PlayerInputComponent->BindAction("Launch", IE_Released, this, &AMyPlayer::LaunchReleased);
+	}
 
-	PlayerInputComponent->BindAxis("TurnAtRate", this, &AMyPlayer::TurnAtRate);
-	PlayerInputComponent->BindAction("Launch", IE_Pressed, this, &AMyPlayer::LaunchPressed);
-	PlayerInputComponent->BindAction("Launch", IE_Released, this, &AMyPlayer::LaunchReleased);
 
 }
 
@@ -118,32 +121,39 @@ void AMyPlayer::FellOutOfWorld(const UDamageType& DmgType)
 		Destroy();
 		MyMode->RestartPlayer(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 	}
-	print("-------");
 }
 
 
 void AMyPlayer::TurnAtRate(float value)
 {
-	CurrentRotation = FRotator(0.0f, value * RotateSpeed, 0.0f);
+	if (able_to_input())
+	{
+		CurrentRotation = FRotator(0.0f, value * RotateSpeed, 0.0f);
+	}
 }
 
 void AMyPlayer::LaunchPressed()
 {
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &AMyPlayer::LaunchReleased, MaxTimeLaunchVelocty, true);
-
+	if (able_to_input())
+	{
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &AMyPlayer::LaunchReleased, MaxTimeLaunchVelocty, true);
+	}
 }
 
 void AMyPlayer::LaunchReleased()
 {
-	CurrentLaunchIntensity = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, MaxTimeLaunchVelocty), FVector2D(0.0f, MaxLaunchIntensity),
-		GetWorldTimerManager().GetTimerElapsed(TimerHandle));
+	if (able_to_input())
+	{
+		CurrentLaunchIntensity = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, MaxTimeLaunchVelocty), FVector2D(0.0f, MaxLaunchIntensity),
+			GetWorldTimerManager().GetTimerElapsed(TimerHandle));
 
-	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::SanitizeFloat(CurrentLaunchIntensity));
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::White, FString::SanitizeFloat(CurrentLaunchIntensity));
 
-	GetWorldTimerManager().ClearTimer(TimerHandle);
+		GetWorldTimerManager().ClearTimer(TimerHandle);
 
-	CurrentForward = Arrow->GetForwardVector();
-	SphereColl->AddImpulse(CurrentForward * CurrentLaunchIntensity);
+		CurrentForward = Arrow->GetForwardVector();
+		SphereColl->AddImpulse(CurrentForward * CurrentLaunchIntensity);
+	}
 }
 
 void AMyPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -156,4 +166,15 @@ void AMyPlayer::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPr
 		Arrow->SetRelativeRotation(FRotator(Arrow->GetRelativeRotation().Pitch, MirrorVectorByNormalRotation.Yaw, Arrow->GetRelativeRotation().Roll));
 		CurrentForward = Arrow->GetForwardVector();
 	}
+}
+
+void AMyPlayer::RootComponentSimulatePhysics(bool IsSimulate)
+{
+	SphereColl->SetSimulatePhysics(IsSimulate);
+}
+
+bool AMyPlayer::able_to_input()
+{
+	bool can = !IsAttacks;
+	return can;
 }

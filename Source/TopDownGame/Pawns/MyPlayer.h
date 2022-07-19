@@ -28,6 +28,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	//---------------------------------------------------------------------//
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 		UCameraComponent* CameraComp;
 
@@ -47,18 +49,31 @@ protected:
 		float RotateSpeed; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
-	float MaxLaunchIntensity;
+		float MaxLaunchIntensity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
 		float MaxTimeLaunchVelocty;		//	The time it takes for the ball to get maximum tension to launch			
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Default")
+		bool IsAttacks;
+
+	//---------------------------------------------------------------------//
 
 	void TurnAtRate(float value);
 
 	void LaunchPressed();
 	void LaunchReleased();
 
+	//---------------------------------------------------------------------//
+
 	UFUNCTION()
 		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	
+	UFUNCTION(BlueprintCallable, Category = "UFUNCTION")
+		void RootComponentSimulatePhysics(bool Simulate);
+
+	UFUNCTION(BlueprintCallable, Category = "UFUNCTION")
+		bool able_to_input();
 
 
 
